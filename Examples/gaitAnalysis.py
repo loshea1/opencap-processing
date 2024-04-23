@@ -36,41 +36,34 @@ sys.path.append(os.path.abspath("./ActivityAnalyses"))
 
 from tkinter import filedialog
 from gait_analysis import gait_analysis
-from utils import get_trial_id, download_trial
+#from utils import get_trial_id, download_trial, get_user_sessions
 from utilsPlotting import plot_dataframe_with_shading
 
 
 # %% Paths.
-#baseDir = os.path.join(os.getcwd(), '..')
-#dataFolder = os.path.join(baseDir, 'Data')
+baseDir = os.path.join(os.getcwd(), '..')
+dataFolder = os.path.join(baseDir, 'Data')
 
 # %% GDI Variables
-with open(r'C:\Users\loshea\repo\matrix.csv', 'r') as file:
-    matrix = list(csv.reader(file))
-matrix = np.array(matrix, dtype=float)
-#matrix = matrix.reshape((459,21))
-matrix = np.transpose(np.array(matrix))
+parDir = os.path.dirname(os.path.dirname(__file__))     #find the parent directory of the files
 
-with open(r'C:\Users\loshea\repo\perGaitCycle.csv', 'r') as file:
-    perGaitCycle = list(csv.reader(file))
+for root, dirs, files in os.walk(parDir):               #walk through the directory tree to search for files
+    if 'matrix.csv' in files:                           #if matrix file found
+        file_path = os.path.join(root, 'matrix.csv')    #open and read the contents
+        with open(file_path, 'r') as file:
+            matrix = list(csv.reader(file))             
+            matrix = np.array(matrix, dtype=float)      #convert to NumPy array
+            matrix = np.transpose(np.array(matrix))     #transpose matrix
+    elif 'perGaitCycle.csv' in files:
+        file_path = os.path.join(root, 'perGaitCycle.csv')
+        with open(file_path, 'r') as file:
+            perGaitCycle = list(csv.reader(file))
+    elif 'controlCalc.csv' in files:
+        file_path = os.path.join(root, 'controlCalc.csv')
+        with open(file_path, 'r') as file:
+            controlCalc = csv.reader(file)
+            controlCalc = [float(value) for row in controlCalc for value in row] #nested list comprehendsion to flatten the 2D list
     
-with open(r'C:\Users\loshea\repo\controlCalc.csv', 'r') as file:
-    controlCalc = csv.reader(file)
-    controlCalc = [float(value) for row in controlCalc for value in row]
-    
-# %% User-defined variables.
-# Select example: options are treadmill and overground.
-# example = 'overground'
-
-# if example == 'treadmill':
-#     session_id = '4d5c3eb1-1a59-4ea1-9178-d3634610561c' # 1.25m/s
-#     trial_name = 'walk_1_25ms'
-
-# elif example == 'overground':
-#     session_id = 'b39b10d1-17c7-4976-b06c-a6aaf33fead2'
-#     trial_name = 'gait_3'
-
-
 # %% select and unzip downloaded folder
 root = tk.Tk()
 root.withdraw()
@@ -85,10 +78,8 @@ if filePath:
 else:
     print("No file selected.")
 
-
-
 while True:
-        #look for trial names
+    #look for trial names
     trialNames = []
     for root, dirs, files in os.walk(filePath[:filePath.find("_")]):
         for file in files:
@@ -132,6 +123,8 @@ while True:
     
     # Download data.
     trialName = download_trial(trial_id, sessionDir, session_id=session_id)
+    sessionNum = get_user_sessions()
+    print(sessionNum)
     
     
     # Init gait analysis.
